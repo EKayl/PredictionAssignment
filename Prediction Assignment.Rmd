@@ -1,0 +1,70 @@
+---
+title: "Prediction Assignment "
+output: html_document
+date: "2024-03-25"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Load necessary libraries
+library(caret) # For data splitting and modeling
+library(rpart) # For decision tree models
+library(rpart.plot) # For plotting decision trees
+library(randomForest) # For Random Forest model
+
+# Load the data
+trainingUrl <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+testUrl <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+
+
+trainingData <- read.csv("pml-training.csv")
+
+testData <- read.csv("pml-testing.csv")
+
+```
+
+```{r}
+# Identify and remove columns with mostly NA values
+mostlyNA <- sapply(trainingData, function(x) mean(is.na(x))) > 0.95
+trainingData <- trainingData[, !mostlyNA]
+
+# Remove non-predictive columns
+trainingData <- trainingData[, -(1:7)]
+
+```
+
+```{r}
+set.seed(123) # For reproducibility
+trainIndex <- sample(1:nrow(trainingData), 0.75*nrow(trainingData))
+trainSet <- trainingData[trainIndex, ]
+validSet <- trainingData[-trainIndex, ]
+
+```
+
+```{r}
+library(caret) # for createDataPartition
+set.seed(123) # For reproducibility
+
+# Assuming trainingData is your full dataset loaded successfully earlier
+inTrain <- createDataPartition(y=trainingData$classe, p=0.75, list=FALSE)
+trainSet <- trainingData[inTrain, ]
+validSet <- trainingData[-inTrain, ]
+```
+
+```{r}
+str(trainSet)  # Check structure of the training set
+```
+```{r}
+# Final model training on the entire training dataset
+finalModel <- randomForest(classe ~ ., data=trainingData)
+
+# Predictions on the test data
+# NOTE: We're assuming testData has the same structure as trainingData and doesn't include the outcome variable 'classe'.
+finalPredictions <- predict(finalModel, testData)
+
+# Output the predictions
+finalPredictions
+```
