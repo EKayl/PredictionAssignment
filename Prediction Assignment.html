@@ -1,0 +1,91 @@
+---
+title: "Untitled"
+author: "esma"
+date: "2024-04-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+install.packages(c("randomForest", "caret"))
+library(randomForest)
+library(caret)
+
+```
+
+```{r}
+install.packages("rpart.plot")
+library(rpart.plot)
+```
+
+
+```{r}
+# Load necessary libraries
+library(caret) # For data splitting and modeling
+library(rpart) # For decision tree models
+library(rpart.plot) # For plotting decision trees
+library(randomForest) # For Random Forest model
+
+# Load the data
+trainingUrl <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+testUrl <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+
+trainingData <- read.csv(url(trainingUrl))
+testData <- read.csv(url(testUrl))
+
+```
+
+
+```{r}
+# Identify and remove columns with mostly NA values
+mostlyNA <- sapply(trainingData, function(x) mean(is.na(x))) > 0.95
+trainingData <- trainingData[, !mostlyNA]
+
+# Remove non-predictive columns
+trainingData <- trainingData[, -(1:7)]
+
+```
+
+```{r}
+set.seed(123) # For reproducibility
+inTrain <- createDataPartition(y=trainingData$classe, p=0.75, list=FALSE)
+trainSet <- trainingData[inTrain, ]
+validSet <- trainingData[-inTrain, ]
+```
+
+```{r}
+# Build the decision tree model
+treeModel <- rpart(classe ~ ., data=trainSet, method="class")
+
+# Prediction and model evaluation on validation set
+treePredictions <- predict(treeModel, validSet, type="class")
+confusionMatrix(treePredictions, validSet$classe)
+
+```
+
+
+```{r}
+# Final model training on the entire training dataset
+finalModel <- randomForest(classe ~ ., data=trainingData)
+
+# Predictions on the test data
+# NOTE: We're assuming testData has the same structure as trainingData and doesn't include the outcome variable 'classe'.
+finalPredictions <- predict(finalModel, testData)
+
+# Output the predictions
+finalPredictions
+
+```
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
